@@ -32,7 +32,7 @@ target_link_libraries(main PRIVATE ${LINEAR_ALGEBRA} ${OpenMP_Fortran_FLAGS})
 # Benchmark free matrix
 add_executable(benchmark_free benchmark_free.f90 davidson.f90 ${UTILS})
 
-target_compile_options(main
+target_compile_options(benchmark_free
   PRIVATE
   ${OpenMP_Fortran_FLAGS}
    ${Fortran_FLAGS}

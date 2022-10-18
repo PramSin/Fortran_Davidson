@@ -2,7 +2,7 @@
 module test_utils
   use numeric_kinds, only: dp
 
-  use davidson_free, only: free_matmul
+  use matrix_free, only: free_matmul
   use array_utils, only: generate_diagonal_dominant
 
   implicit none

@@ -1,10 +1,9 @@
 module matrix_free
 
   use numeric_kinds, only: dp
-  use davidson_free, only: free_matmul
   implicit none
 
-  public mtx_gemv, stx_gemv, compute_stx_on_the_fly, compute_matrix_on_the_fly
+  public mtx_gemv, stx_gemv, compute_stx_on_the_fly, compute_matrix_on_the_fly, free_matmul
 
 contains
 
@@ -74,6 +73,52 @@ contains
     vector(i) = 1d0
 
   end function compute_stx_on_the_fly
+
+
+  function free_matmul(fun, array) result (matrix)
+    !> \brief perform a matrix-matrix multiplication by generating a matrix on the fly using `fun`
+    !> \param[in] fun function to compute a matrix on the fly
+    !> \param[in] array matrix to multiply with fun
+    !> \return resulting matrix
+
+    ! input/output
+    implicit none
+    complex(dp), dimension(:, :), intent(in) :: array
+    complex(dp), dimension(size(array, 1), size(array, 2)) :: matrix
+
+    interface
+      function fun(index, dim) result(vector)
+        !> \brief Fucntion to compute the matrix `matrix` on the fly
+        !> \param[in] index column/row to compute from `matrix`
+        !> \param vector column/row from matrix
+        use numeric_kinds, only: dp
+        integer, intent(in) :: index
+        integer, intent(in) :: dim
+        complex(dp), dimension(dim) :: vector
+
+      end function fun
+
+    end interface
+
+    ! local variables
+    complex(dp), dimension(size(array, 1)) :: vec
+    integer :: dim1, dim2, i, j
+
+    ! dimension of the square matrix computed on the fly
+    dim1 = size(array, 1)
+    dim2 = size(array, 2)
+
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(i, j, vec)
+    do i = 1, dim1
+      vec = fun(i, dim1)
+      do j = 1, dim2
+        matrix(i, j) = dot_product(vec, array(:, j))
+      end do
+    end do
+    !$OMP END PARALLEL DO
+
+  end function free_matmul
 
 end module matrix_free
 

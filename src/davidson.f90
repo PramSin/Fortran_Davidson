@@ -260,6 +260,7 @@ end module davidson_dense
 
 module davidson_free
 
+  use omp_lib
   use numeric_kinds, only: dp
   use lapack_wrapper, only: lapack_generalized_eigensolver, lapack_matmul, lapack_matrix_vector, &
     lapack_qr, lapack_solver
@@ -270,7 +271,7 @@ module davidson_free
   !> \private
   private
   !> \public
-  public :: generalized_eigensolver_free, free_matmul
+  public :: generalized_eigensolver_free
 
 contains
 
@@ -516,62 +517,20 @@ contains
     ! local variable
     integer :: ii
     complex(dp), dimension(dim,1) :: tmp_array
-
+    
+    !$OMP PARALLEL DO &
+    !$OMP PRIVATE(ii, tmp_array)
     do ii = 1,dim
       tmp_array = 0.0_dp
       tmp_array(ii,1) = 1.0_dp
       tmp_array = fun_gemv(tmp_array)
       out(ii) = tmp_array(ii,1)
-      ! print *, out(ii)
-    end do
-
-  end function extract_diagonal_free
-
-
-  function free_matmul(fun, array) result (matrix)
-    !> \brief perform a matrix-matrix multiplication by generating a matrix on the fly using `fun`
-    !> \param[in] fun function to compute a matrix on the fly
-    !> \param[in] array matrix to multiply with fun
-    !> \return resulting matrix
-
-    ! input/output
-    implicit none
-    complex(dp), dimension(:, :), intent(in) :: array
-    complex(dp), dimension(size(array, 1), size(array, 2)) :: matrix
-
-    interface
-      function fun(index, dim) result(vector)
-        !> \brief Fucntion to compute the matrix `matrix` on the fly
-        !> \param[in] index column/row to compute from `matrix`
-        !> \param vector column/row from matrix
-        use numeric_kinds, only: dp
-        integer, intent(in) :: index
-        integer, intent(in) :: dim
-        complex(dp), dimension(dim) :: vector
-
-      end function fun
-
-    end interface
-
-    ! local variables
-    complex(dp), dimension(size(array, 1)) :: vec
-    integer :: dim1, dim2, i, j
-
-    ! dimension of the square matrix computed on the fly
-    dim1 = size(array, 1)
-    dim2 = size(array, 2)
-
-    !$OMP PARALLEL DO &
-    !$OMP PRIVATE(i, j, vec)
-    do i = 1, dim1
-      vec = fun(i, dim1)
-      do j = 1, dim2
-        matrix(i, j) = dot_product(vec, array(:, j))
-      end do
+      ! M = omp_get_num_threads()
+      ! print *, out(ii), M
     end do
     !$OMP END PARALLEL DO
 
-  end function free_matmul
+  end function extract_diagonal_free
 
 
   subroutine check_deallocate_matrix(matrix)

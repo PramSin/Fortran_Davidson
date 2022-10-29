@@ -1,5 +1,4 @@
- # Specify the minimum version for CMake
-
+# Specify the minimum version for CMake
 cmake_minimum_required(VERSION 3.0.2)
 
 enable_language(Fortran)
@@ -23,9 +22,6 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 # Cmake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
-# Include function to Load MKL
-include(${CMAKE_MODULE_PATH}/FindMKL.cmake)
-
 # Find MKL
 find_package(MKL)
 if (MKL_FOUND)
@@ -42,11 +38,11 @@ else()
   find_package(BLAS COMPONENTS Fortran REQUIRED)
   set(LINEAR_ALGEBRA ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES})
   message(STATUS "MKL NOT FOUND! Using default BLAS and LAPACK")
-
-  # Find OpenMP
-  find_package(OpenMP REQUIRED)
-  message(STATUS "OpenMP flags: " ${OpenMP_Fortran_FLAGS})
 endif(MKL_FOUND)
+
+# Find OpenMP
+find_package(OpenMP REQUIRED)
+message(STATUS "OpenMP flags: " ${OpenMP_Fortran_FLAGS})
 
 # Testing
 option(ENABLE_TEST "enable test set" off)
